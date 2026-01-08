@@ -65,3 +65,32 @@ export async function generateAlphaBatch(
     return null;
   }
 }
+
+export async function fetchLatestRealResults(type: LotteryType) {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `Pesquise e retorne os dados do ÚLTIMO concurso realizado da loteria ${type} no Brasil (Caixa Econômica Federal).
+      Preciso do número do concurso, as dezenas sorteadas (ordenadas), a data do sorteio e o valor do prêmio acumulado ou pago.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            contestNumber: { type: Type.STRING },
+            numbers: { type: Type.ARRAY, items: { type: Type.INTEGER } },
+            date: { type: Type.STRING },
+            prize: { type: Type.NUMBER },
+            sourceUrl: { type: Type.STRING }
+          },
+          required: ["contestNumber", "numbers", "date", "prize"]
+        }
+      }
+    });
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error("Real Results Sync Error:", error);
+    return null;
+  }
+}
